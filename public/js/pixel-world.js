@@ -647,8 +647,8 @@ export class SnapGearPixelWorld {
         onInteract: () => {
           this.cb.showDialogue(
             [
-              `${clerkName.toUpperCase()}: Welcome! Every display pedestal in this room is synced live with SQLite.`,
-              `${clerkName.toUpperCase()}: Click any product or its BUY tag to view details and purchase right away!`
+              `${clerkName.toUpperCase()}: Welcome! Walk up to any display pedestal and press Z (or click it) to add gear to your cart.`,
+              `${clerkName.toUpperCase()}: When you're ready to pay, come right back to this CHECKOUT counter!`
             ],
             [
               { label: "🛒 Go to Checkout", onClick: () => this.cb.openCart() },
@@ -1570,8 +1570,34 @@ export class SnapGearPixelWorld {
   }
 
   interactFacing() {
+    const cfg = this.mapConfigs[this.mapId];
+    if (!cfg) return;
     const off = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[this.player.dir];
-    const hit = this.findInteractiveAt(this.player.x + 8 + off[0] * 16, this.player.y + 8 + off[1] * 16);
+    const cx = this.player.x + 8;
+    const cy = this.player.y + 8;
+    let hit = this.findInteractiveAt(cx + off[0] * 16, cy + off[1] * 16);
+    if (!hit) {
+      // Fallback: find closest interactive object/product/station within 26px of player
+      let bestDist = 26;
+      for (const z of cfg.zones) {
+        const zx = z.x + z.w / 2;
+        const zy = z.y + z.h / 2;
+        const d = Math.hypot(cx - zx, cy - zy);
+        if (d < bestDist) {
+          bestDist = d;
+          hit = z;
+        }
+      }
+      for (const n of cfg.npcs) {
+        const nx = (n.px ?? n.tx * TILE) + 8;
+        const ny = (n.py ?? n.ty * TILE) + 8;
+        const d = Math.hypot(cx - nx, cy - ny);
+        if (d < bestDist) {
+          bestDist = d;
+          hit = n;
+        }
+      }
+    }
     if (hit) {
       retroAudio.blip();
       hit.onInteract?.();
