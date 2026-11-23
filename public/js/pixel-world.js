@@ -454,6 +454,7 @@ export class SnapGearPixelWorld {
     this.cameraFlash = 0;
     this.doorAnim = null;
     this.dustPuffs = [];
+    this.lastAutoZoneId = null;
 
     this.player = {
       x: 11 * TILE,
@@ -1275,6 +1276,7 @@ export class SnapGearPixelWorld {
       this.player.y = (spawnTy ?? (targetMap === "town" ? 8 : 10)) * TILE;
       this.player.dir = dir;
       this.doorAnim = null;
+      this.lastAutoZoneId = null;
       this.bgDirty = true;
       retroAudio.setMode(targetMap === "town" || targetMap === "home" ? "town" : "mart");
       this.resize();
@@ -1780,6 +1782,7 @@ export class SnapGearPixelWorld {
         }
       }
       this.checkStepTriggers();
+      this.checkProximityInteract();
     } else if (this.player.path.length > 0) {
       const target = this.player.path[0];
       const ddx = target.x - this.player.x;
@@ -1807,6 +1810,38 @@ export class SnapGearPixelWorld {
       }
     } else {
       this.player.walkFrame = 0;
+    }
+  }
+
+  checkProximityInteract() {
+    if (this.mapId === "town" || this.modalOpen || this.doorAnim || this.cb.isDialogueOpen()) return;
+    const cfg = this.mapConfigs[this.mapId];
+    if (!cfg) return;
+    const pxCenter = this.player.x + 8;
+    const pyCenter = this.player.y + 8;
+    let nearest = null;
+    let bestD = 20;
+    for (const z of cfg.zones) {
+      if (z.kind !== "product" && z.kind !== "station") continue;
+      // Distance from player center to closest point of the zone box
+      const cx = Math.max(z.x, Math.min(pxCenter, z.x + z.w));
+      const cy = Math.max(z.y, Math.min(pyCenter, z.y + z.h));
+      const d = Math.hypot(pxCenter - cx, pyCenter - cy);
+      if (d < bestD) {
+        bestD = d;
+        nearest = z;
+      }
+    }
+    if (!nearest) {
+      this.lastAutoZoneId = null;
+      return;
+    }
+    if (nearest.id !== this.lastAutoZoneId && bestD <= 13) {
+      this.lastAutoZoneId = nearest.id;
+      this.keys.clear();
+      this.player.path = [];
+      retroAudio.blip();
+      nearest.onInteract?.();
     }
   }
 
