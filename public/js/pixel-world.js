@@ -1875,9 +1875,9 @@ export class SnapGearPixelWorld {
     // Main horizontal avenue (y=7..8) + Center Square Plaza (x=9..14, y=2..8)
     drawBrickRect(1, 7, 22, 2);
     drawBrickRect(9, 2, 6, 6);
-    // Front door pads for top buildings (My Home & Sony Pro)
-    drawBrickRect(5, 6, 1, 1);
-    drawBrickRect(18, 6, 1, 1);
+    // Front door pads centered directly under My Home & Sony Pro doors
+    drawBrickRect(4.5, 6, 1, 1);
+    drawBrickRect(18.125, 6, 1, 1);
     // Vertical avenues down to the lower street
     drawBrickRect(8, 9, 1, 6);
     drawBrickRect(14, 9, 1, 6);
