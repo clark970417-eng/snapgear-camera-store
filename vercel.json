@@ -1,19 +1,8 @@
 {
   "version": 2,
-  "outputDirectory": "public",
   "functions": {
-    "api/index.mjs": {
-      "includeFiles": "data/schema.sql"
+    "server.mjs": {
+      "includeFiles": "{data/schema.sql,public/**}"
     }
-  },
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index.mjs" },
-    { "source": "/admin", "destination": "/index.html" },
-    { "source": "/admin/", "destination": "/index.html" },
-    { "source": "/town", "destination": "/index.html" },
-    { "source": "/home", "destination": "/index.html" },
-    { "source": "/sony", "destination": "/index.html" },
-    { "source": "/gear", "destination": "/index.html" },
-    { "source": "/catalog", "destination": "/index.html" }
-  ]
+  }
 }

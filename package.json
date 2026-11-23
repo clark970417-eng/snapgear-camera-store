@@ -7,8 +7,5 @@
   "scripts": {
     "start": "node server.mjs",
     "reset-db": "node -e \"import('./lib/db.mjs').then(m => { m.resetDatabase(); console.log('SnapGear SQLite reset complete.'); })\""
-  },
-  "engines": {
-    "node": "22.x"
   }
 }
