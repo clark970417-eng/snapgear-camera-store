@@ -1305,7 +1305,7 @@ export class SnapGearPixelWorld {
           e.stopPropagation();
           retroAudio.blip();
           this.cb.closeDialogue?.();
-          z.onInteract?.();
+          this.walkToAndInteract(z);
         });
         this.labelsEl.appendChild(el);
       } else if (z.kind === "product" && z.prod) {
@@ -1316,7 +1316,7 @@ export class SnapGearPixelWorld {
         el.className = `wl-product ${soldOut ? "soldout" : ""}`;
         el.style.left = toPctX(z.tx * TILE + TILE / 2);
         el.style.top = toPctY((z.ty + 1) * TILE + 1);
-        el.title = `${p.name} — NT$${Number(p.price).toLocaleString()} (Stock: ${p.stock}). Click to add to cart, then pay at Checkout!`;
+        el.title = `${p.name} — NT$${Number(p.price).toLocaleString()} (Stock: ${p.stock}). Walk up to inspect & add to cart!`;
         el.innerHTML = `
           <span class="wl-product-name">${shortProductLabel(p.name)}</span>
           <span class="wl-product-row">
@@ -1328,7 +1328,7 @@ export class SnapGearPixelWorld {
           e.stopPropagation();
           retroAudio.blip();
           this.cb.closeDialogue?.();
-          z.onInteract?.();
+          this.walkToAndInteract(z);
         });
         this.labelsEl.appendChild(el);
       }
@@ -1401,6 +1401,19 @@ export class SnapGearPixelWorld {
       }
     }
     return [];
+  }
+
+  walkToAndInteract(hit) {
+    const curTx = Math.round(this.player.x / TILE);
+    const curTy = Math.round(this.player.y / TILE);
+    const ax = hit.approach?.tx ?? curTx;
+    const ay = hit.approach?.ty ?? curTy;
+    if (Math.hypot(curTx - ax, curTy - ay) <= 1.25) {
+      hit.onInteract?.();
+    } else {
+      this.player.path = this.findPath(curTx, curTy, ax, ay);
+      this.player.pendingAction = hit.onInteract || null;
+    }
   }
 
   screenToWorld(clientX, clientY) {
@@ -1486,38 +1499,22 @@ export class SnapGearPixelWorld {
 
     this.canvas.addEventListener("pointerdown", (e) => {
       if (this.modalOpen) return;
-      const { wx, wy } = this.screenToWorld(e.clientX, e.clientY);
-      const hit = this.findInteractiveAt(wx, wy);
-
-      if (hit && hit.instantClick) {
-        this.cb.closeDialogue?.();
-        retroAudio.blip();
-        hit.onInteract?.();
-        return;
-      }
-
       if (this.cb.isDialogueOpen()) {
         this.cb.advanceDialogue();
         return;
       }
 
-      const curTx = Math.round(this.player.x / TILE);
-      const curTy = Math.round(this.player.y / TILE);
+      const { wx, wy } = this.screenToWorld(e.clientX, e.clientY);
+      const hit = this.findInteractiveAt(wx, wy);
 
       if (hit) {
         retroAudio.blip();
-        const ax = hit.approach?.tx ?? Math.floor(wx / TILE);
-        const ay = hit.approach?.ty ?? Math.floor(wy / TILE);
-        if (Math.hypot(curTx - ax, curTy - ay) <= 1.8) {
-          hit.onInteract?.();
-        } else {
-          this.player.path = this.findPath(curTx, curTy, ax, ay);
-          this.player.pendingAction = hit.onInteract || null;
-          if (this.player.path.length === 0) hit.onInteract?.();
-        }
+        this.walkToAndInteract(hit);
         return;
       }
 
+      const curTx = Math.round(this.player.x / TILE);
+      const curTy = Math.round(this.player.y / TILE);
       this.player.path = this.findPath(curTx, curTy, Math.floor(wx / TILE), Math.floor(wy / TILE));
       this.player.pendingAction = null;
     });
