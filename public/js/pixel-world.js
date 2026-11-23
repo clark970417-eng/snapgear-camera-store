@@ -422,10 +422,8 @@ function drawChibi(ctx, x, y, opts) {
 function shortProductLabel(name) {
   return String(name || "")
     .replace(/^Sony\s+/i, "")
-    .replace(/^SanDisk\s+/i, "SanDisk ")
     .replace(/^Manfrotto\s+/i, "")
-    .replace(/^SmallRig\s+/i, "SmallRig ")
-    .slice(0, 19);
+    .slice(0, 24);
 }
 
 // =========================================================================
@@ -719,9 +717,6 @@ export class SnapGearPixelWorld {
       {
         id: "my_home_bldg",
         kind: "building",
-        labelClass: "home-sign",
-        labelText: "🏠 MY HOME",
-        labelPos: { x: 5 * TILE, y: 1.75 * TILE },
         x: 2 * TILE,
         y: 1.5 * TILE,
         w: 6 * TILE,
@@ -736,9 +731,6 @@ export class SnapGearPixelWorld {
       {
         id: "sony_store_bldg",
         kind: "building",
-        labelClass: "sony-sign",
-        labelText: `📷 SONY PRO (${sonyProducts.length})`,
-        labelPos: { x: 18.6 * TILE, y: 1.85 * TILE },
         x: 16 * TILE,
         y: 1.6 * TILE,
         w: 5.25 * TILE,
@@ -753,9 +745,6 @@ export class SnapGearPixelWorld {
       {
         id: "gear_store_bldg",
         kind: "building",
-        labelClass: "gear-sign",
-        labelText: `🎒 PHOTO GEAR (${gearProducts.length})`,
-        labelPos: { x: 4.6 * TILE, y: 10.0 * TILE },
         x: 2 * TILE,
         y: 9.8 * TILE,
         w: 5.25 * TILE,
@@ -770,9 +759,6 @@ export class SnapGearPixelWorld {
       {
         id: "sql_admin_bldg",
         kind: "building",
-        labelClass: "sql-sign",
-        labelText: "🔒 SQL ADMIN LAB",
-        labelPos: { x: 19.6 * TILE, y: 10.0 * TILE },
         x: 17 * TILE,
         y: 9.8 * TILE,
         w: 5.25 * TILE,
