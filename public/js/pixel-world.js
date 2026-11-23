@@ -1814,7 +1814,7 @@ export class SnapGearPixelWorld {
   }
 
   checkProximityInteract() {
-    if (this.mapId === "town" || this.modalOpen || this.doorAnim || this.cb.isDialogueOpen()) return;
+    if (this.modalOpen || this.doorAnim || this.cb.isDialogueOpen()) return;
     const cfg = this.mapConfigs[this.mapId];
     if (!cfg) return;
     const pxCenter = this.player.x + 8;
@@ -1822,7 +1822,11 @@ export class SnapGearPixelWorld {
     let nearest = null;
     let bestD = 20;
     for (const z of cfg.zones) {
-      if (z.kind !== "product" && z.kind !== "station") continue;
+      if (this.mapId === "town") {
+        if (z.kind !== "prop") continue;
+      } else {
+        if (z.kind !== "product" && z.kind !== "station") continue;
+      }
       // Distance from player center to closest point of the zone box
       const cx = Math.max(z.x, Math.min(pxCenter, z.x + z.w));
       const cy = Math.max(z.y, Math.min(pyCenter, z.y + z.h));
