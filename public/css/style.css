@@ -114,6 +114,11 @@ body.admin-standalone {
   background: #3868c8;
   transform: translate(-50%, -100%) translateY(-2px);
 }
+.wl-building.home-sign {
+  background: #8c3426;
+  color: #fff6e4;
+  border-color: #f6ddb2;
+}
 .wl-building.mart-sign {
   background: #1d4496;
   border-color: #ffffff;

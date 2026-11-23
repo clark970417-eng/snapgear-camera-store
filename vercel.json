@@ -8,10 +8,12 @@
   },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/index.mjs" },
-    { "source": "/admin", "destination": "/admin.html" },
-    { "source": "/admin/", "destination": "/admin.html" },
+    { "source": "/admin", "destination": "/index.html" },
+    { "source": "/admin/", "destination": "/index.html" },
     { "source": "/town", "destination": "/index.html" },
-    { "source": "/mart", "destination": "/index.html" },
+    { "source": "/home", "destination": "/index.html" },
+    { "source": "/sony", "destination": "/index.html" },
+    { "source": "/gear", "destination": "/index.html" },
     { "source": "/catalog", "destination": "/index.html" }
   ]
 }

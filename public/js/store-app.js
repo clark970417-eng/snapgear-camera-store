@@ -237,7 +237,7 @@ function setCartQuantity(productId, delta) {
 // MODALS ORCHESTRATION
 // =========================================================================
 
-function openModal(id) {
+function openModal(id, opts = {}) {
   closeDialogue();
   closeAllModals(false);
   const el = document.getElementById(id);
@@ -258,6 +258,7 @@ function openModal(id) {
         onToast: showToast
       });
     }
+    if (opts.tab) adminPanel.activeTab = opts.tab;
     adminPanel.mount();
   }
 }
@@ -628,18 +629,23 @@ function renderCartModal() {
         <div style="font-size:44px;margin-bottom:8px;">🛒</div>
         <h3 class="px" style="margin:0 0 8px;font-size:20px;">YOUR SNAPGEAR CART IS EMPTY</h3>
         <p style="font-size:14px;color:#5a5f70;max-width:460px;margin:0 auto 18px;">
-          Walk inside SnapGear Mart to inspect camera gear pedestals, or open the full D2C catalog to add genuine Sony, SanDisk &amp; Manfrotto accessories.
+          Walk inside SONY PRO or PHOTO GEAR to buy camera gear off the display pedestals, or open the full D2C catalog.
         </p>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-          <button class="btn-gba primary" id="emptyGoCatalogBtn" type="button">📷 Browse Shop Catalog</button>
-          <button class="btn-gba" id="emptyGoMartBtn" type="button">🏪 Walk Into SnapGear Mart</button>
+          <button class="btn-gba primary" id="emptyGoCatalogBtn" type="button">📋 Browse All Products</button>
+          <button class="btn-gba" id="emptyGoSonyBtn" type="button">📷 Enter Sony Pro</button>
+          <button class="btn-gba" id="emptyGoGearBtn" type="button">🎒 Enter Photo Gear</button>
         </div>
       </div>
     `;
     body.querySelector("#emptyGoCatalogBtn")?.addEventListener("click", () => openModal("modalCatalog"));
-    body.querySelector("#emptyGoMartBtn")?.addEventListener("click", () => {
+    body.querySelector("#emptyGoSonyBtn")?.addEventListener("click", () => {
       closeAllModals();
-      world?.switchMap("mart", 9, 10, "up");
+      world?.switchMap("sony", 9, 10, "up");
+    });
+    body.querySelector("#emptyGoGearBtn")?.addEventListener("click", () => {
+      closeAllModals();
+      world?.switchMap("gear", 9, 10, "up");
     });
     return;
   }
@@ -811,11 +817,11 @@ function renderOrdersModal() {
               const itemDesc = o.items.map((i) => `${i.quantity}× ${i.product_name} (${fmtNtd(i.unit_price)})`).join("<br>");
               let actionHtml = `<span style="color:#8a90a2;font-size:12px;">Recorded</span>`;
               if (o.order_type === "S" && !refundedSaleIds.has(o.order_id)) {
-                actionHtml = `<button class="btn-gba sm buy-now" data-quick-refund="${o.order_id}" type="button">↩ Refund ('F')</button>`;
+                actionHtml = `<button class="btn-gba sm" data-open-admin-tx type="button">🔒 Refund in Admin</button>`;
               } else if (o.order_type === "S") {
                 actionHtml = `<span class="type-badge type-F">Refunded</span>`;
               } else if (o.order_type === "P") {
-                actionHtml = `<button class="btn-gba sm success" data-quick-restock="${o.order_id}" type="button">🚚 Restock ('R')</button>`;
+                actionHtml = `<button class="btn-gba sm" data-open-admin-tx type="button">🔒 Restock in Admin</button>`;
               }
               return `
                 <tr>
@@ -871,45 +877,8 @@ function renderOrdersModal() {
     </div>
   `;
 
-  body.querySelectorAll("[data-quick-refund]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const id = Number(btn.dataset.quickRefund);
-      if (!window.confirm(`Process Refund ('F') for Sale #${id} and return item stock to SQLite?`)) return;
-      try {
-        const res = await fetch("/api/orders/refund", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ related_order_id: id })
-        });
-        const json = await res.json();
-        if (!res.ok || !json.ok) throw new Error(json.error);
-        retroAudio.confirm();
-        showToast(`Refund #${json.result.order_id} recorded!`);
-        await fetchStorefront();
-      } catch (err) {
-        showToast(err.message);
-      }
-    });
-  });
-
-  body.querySelectorAll("[data-quick-restock]").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const id = Number(btn.dataset.quickRestock);
-      try {
-        const res = await fetch("/api/orders/restock", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ related_order_id: id })
-        });
-        const json = await res.json();
-        if (!res.ok || !json.ok) throw new Error(json.error);
-        retroAudio.confirm();
-        showToast(`Restock #${json.result.order_id} added to inventory!`);
-        await fetchStorefront();
-      } catch (err) {
-        showToast(err.message);
-      }
-    });
+  body.querySelectorAll("[data-open-admin-tx]").forEach((btn) => {
+    btn.addEventListener("click", () => openModal("modalAdmin", { tab: "tx" }));
   });
 }
 
@@ -953,14 +922,18 @@ async function init() {
       openModal("modalCart");
     },
     openOrders: () => openModal("modalOrders"),
-    openAdmin: () => openModal("modalAdmin"),
+    openAdmin: (tab) => openModal("modalAdmin", { tab }),
     showDialogue,
     advanceDialogue,
     closeDialogue,
     isDialogueOpen: () => state.dialogue.open,
+    onTimeModeChange: () => updateClockPill(),
     onMapChange: (mapId, title) => {
       document.getElementById("navTown")?.classList.toggle("active", mapId === "town");
-      document.getElementById("navMart")?.classList.toggle("active", mapId === "mart");
+      document.getElementById("navHome")?.classList.toggle("active", mapId === "home");
+      document.getElementById("navSony")?.classList.toggle("active", mapId === "sony");
+      document.getElementById("navGear")?.classList.toggle("active", mapId === "gear");
+      document.getElementById("navSqlLab")?.classList.toggle("active", mapId === "sqllab");
       showLocationBanner(title);
     }
   });
@@ -974,13 +947,25 @@ async function init() {
   document.getElementById("navTown")?.addEventListener("click", () => {
     closeDialogue();
     closeAllModals();
-    if (world.mapId !== "town") world.switchMap("town", 11, 9, "down");
+    if (world.mapId !== "town") world.switchMap("town", 11, 8, "down");
   });
 
-  document.getElementById("navMart")?.addEventListener("click", () => {
+  document.getElementById("navHome")?.addEventListener("click", () => {
     closeDialogue();
     closeAllModals();
-    if (world.mapId !== "mart") world.switchMap("mart", 9, 10, "up");
+    if (world.mapId !== "home") world.switchMap("home", 9, 10, "up");
+  });
+
+  document.getElementById("navSony")?.addEventListener("click", () => {
+    closeDialogue();
+    closeAllModals();
+    if (world.mapId !== "sony") world.switchMap("sony", 9, 10, "up");
+  });
+
+  document.getElementById("navGear")?.addEventListener("click", () => {
+    closeDialogue();
+    closeAllModals();
+    if (world.mapId !== "gear") world.switchMap("gear", 9, 10, "up");
   });
 
   document.getElementById("navCatalog")?.addEventListener("click", () => {
@@ -997,7 +982,15 @@ async function init() {
     state.lastReceipt = null;
     openModal("modalCart");
   });
-  document.getElementById("navAdmin")?.addEventListener("click", () => openModal("modalAdmin"));
+  document.getElementById("navSqlLab")?.addEventListener("click", () => {
+    closeDialogue();
+    if (world.mapId === "sqllab") {
+      openModal("modalAdmin");
+    } else {
+      closeAllModals();
+      world.switchMap("sqllab", 9, 10, "up");
+    }
+  });
 
   document.getElementById("clockBtn")?.addEventListener("click", () => {
     const mode = world.cycleTimeMode();
@@ -1028,22 +1021,29 @@ async function init() {
   // Load live SQLite data
   await fetchStorefront();
 
-  // Welcome GBA dialogue (styled exactly like akshayakula.com's opening box!)
-  setTimeout(() => {
-    if (!state.activeModalId && state.storefront) {
-      showDialogue(
-        [
-          `${world.getGreeting()}\nWelcome to SNAPGEAR CAMERA STORE!`,
-          `Explore our pixel-art camera town with WASD / ARROWS / CLICK — or jump straight into our ${state.storefront.products.length}-product D2C catalog & Admin Panel.`
-        ],
-        [
-          { label: "📷 Shop Catalog & Prices", onClick: () => openModal("modalCatalog") },
-          { label: "🏪 Enter SnapGear Mart", onClick: () => world.switchMap("mart", 9, 10, "up") },
-          { label: "🔒 Open Admin Panel", onClick: () => openModal("modalAdmin") }
-        ]
-      );
-    }
-  }, 450);
+  // Support direct /admin URL inside the exact same single website (no separate admin site)
+  if (window.location.pathname.replace(/\/+$/, "") === "/admin") {
+    world.switchMap("sqllab", 9, 10, "up");
+    setTimeout(() => openModal("modalAdmin"), 320);
+  } else {
+    // Welcome GBA dialogue
+    setTimeout(() => {
+      if (!state.activeModalId && state.storefront) {
+        showDialogue(
+          [
+            `${world.getGreeting()}\nWelcome to SNAPGEAR CAMERA TOWN!`,
+            `Walk into MY HOME, shop inside SONY PRO & PHOTO GEAR, or step inside SQL ADMIN LAB to manage the live SQLite database.`
+          ],
+          [
+            { label: "🏠 Go to My Home", onClick: () => world.switchMap("home", 9, 10, "up") },
+            { label: "📷 Shop Sony Pro", onClick: () => world.switchMap("sony", 9, 10, "up") },
+            { label: "🎒 Shop Photo Gear", onClick: () => world.switchMap("gear", 9, 10, "up") },
+            { label: "📋 All Catalog", onClick: () => openModal("modalCatalog") }
+          ]
+        );
+      }
+    }, 450);
+  }
 
   canvas.focus();
 }
