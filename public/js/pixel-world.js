@@ -443,6 +443,7 @@ export class SnapGearPixelWorld {
     this.modalOpen = false;
     this.timeMode = "auto";
     this.cameraFlash = 0;
+    this.doorAnim = null;
 
     this.player = {
       x: 11 * TILE,
@@ -1214,13 +1215,36 @@ export class SnapGearPixelWorld {
   }
 
   switchMap(targetMap, spawnTx, spawnTy, dir = "down") {
-    if (!this.mapConfigs[targetMap]) return;
+    if (!this.mapConfigs[targetMap] || this.doorAnim) return;
     this.cb.closeDialogue?.();
+    this.player.path = [];
+    this.player.pendingAction = null;
+
+    // Play smooth Pokémon-style step-through-door animation when entering a building from Town!
+    if (this.mapId === "town" && targetMap !== "town") {
+      retroAudio.door();
+      this.player.dir = "up";
+      this.doorAnim = {
+        frame: 0,
+        totalFrames: 22,
+        startY: this.player.y,
+        doorX: Math.round(this.player.x) - 1,
+        doorY: Math.round(this.player.y) - 16,
+        targetMap,
+        spawnTx,
+        spawnTy,
+        dir
+      };
+      return;
+    }
+
+    this.finishMapSwitch(targetMap, spawnTx, spawnTy, dir);
+  }
+
+  finishMapSwitch(targetMap, spawnTx, spawnTy, dir = "down") {
     const fade = document.getElementById("fade");
     retroAudio.door();
     if (fade) fade.classList.add("on");
-    this.player.path = [];
-    this.player.pendingAction = null;
 
     window.setTimeout(() => {
       this.mapId = targetMap;
@@ -1228,12 +1252,13 @@ export class SnapGearPixelWorld {
       this.player.x = (spawnTx ?? (targetMap === "town" ? 11 : 9)) * TILE;
       this.player.y = (spawnTy ?? (targetMap === "town" ? 8 : 10)) * TILE;
       this.player.dir = dir;
+      this.doorAnim = null;
       this.bgDirty = true;
       retroAudio.setMode(targetMap === "town" || targetMap === "home" ? "town" : "mart");
       this.resize();
       this.cb.onMapChange?.(targetMap, cfg.title);
       if (fade) fade.classList.remove("on");
-    }, 210);
+    }, 200);
   }
 
   resize() {
@@ -1627,6 +1652,21 @@ export class SnapGearPixelWorld {
     }
 
     if (this.modalOpen || this.cb.isDialogueOpen()) return;
+
+    // Step-through-door entry animation
+    if (this.doorAnim) {
+      const a = this.doorAnim;
+      a.frame++;
+      this.player.dir = "up";
+      this.player.y = a.startY - (a.frame / a.totalFrames) * 14;
+      this.player.walkFrame = (a.frame >> 2) % 4;
+      if (a.frame >= a.totalFrames) {
+        const { targetMap, spawnTx, spawnTy, dir } = a;
+        this.doorAnim = { ...a, done: true };
+        this.finishMapSwitch(targetMap, spawnTx, spawnTy, dir);
+      }
+      return;
+    }
 
     // Update patrolling NPCs
     const curCfg = this.mapConfigs[this.mapId];
@@ -2085,6 +2125,12 @@ export class SnapGearPixelWorld {
       drawSqlAdminBuilding(ctx, 17 * TILE, 9.9 * TILE, this.tick);
       drawFountain(ctx, 10 * TILE, 10 * TILE, this.tick);
       drawPlazaCameraLandmark(ctx, 11 * TILE, 5 * TILE, this.tick, this.cameraFlash);
+      // Draw darkened open doorway while character steps inside
+      if (this.doorAnim) {
+        const openProgress = Math.min(1, this.doorAnim.frame / 8);
+        const openW = Math.round(16 * openProgress);
+        px(ctx, this.doorAnim.doorX + Math.round((16 - openW) / 2), this.doorAnim.doorY, "#121620", openW, 20);
+      }
     }
 
     // Dynamically render purchased camera gear sprites inside MY HOME's display cabinet!
