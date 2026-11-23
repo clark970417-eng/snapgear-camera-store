@@ -1225,14 +1225,23 @@ export class SnapGearPixelWorld {
     const isExiting = this.mapId !== "town" && targetMap === "town";
     if (isEntering || isExiting) {
       retroAudio.door();
+      this.hoverZone = null;
+      this.hideTip();
       this.player.dir = isEntering ? "up" : "down";
+      const TOWN_DOORS = {
+        home:   { x: 74,  y: 70,  w: 12, h: 21, panel: "#b8342c" },
+        sony:   { x: 290, y: 68,  w: 16, h: 24, panel: "#78baf0" },
+        gear:   { x: 66,  y: 197, w: 16, h: 22, panel: "#8a5a36" },
+        sqllab: { x: 306, y: 197, w: 16, h: 22, panel: "#4078a8" }
+      };
+      const door = TOWN_DOORS[targetMap] || { x: Math.round(this.player.x), y: Math.round(this.player.y) - 22, w: 16, h: 22, panel: "#78baf0" };
       this.doorAnim = {
         mode: isEntering ? "enter" : "exit",
         frame: 0,
-        totalFrames: 20,
+        totalFrames: 24,
+        startX: this.player.x,
         startY: this.player.y,
-        doorX: Math.round(this.player.x) - 1,
-        doorY: Math.round(this.player.y) - 16,
+        door,
         targetMap,
         spawnTx,
         spawnTy,
@@ -1663,8 +1672,21 @@ export class SnapGearPixelWorld {
       a.frame++;
       const isEnter = a.mode === "enter";
       this.player.dir = isEnter ? "up" : "down";
-      this.player.y = a.startY + (isEnter ? -1 : 1) * (a.frame / a.totalFrames) * 14;
-      this.player.walkFrame = (a.frame >> 2) % 4;
+      if (isEnter) {
+        // Frames 0..8: door slides open; Frames 8..24: character centers & steps cleanly into doorway
+        if (a.frame > 8) {
+          const t = (a.frame - 8) / (a.totalFrames - 8);
+          const centerX = a.door.x + (a.door.w - 16) / 2;
+          this.player.x = a.startX + (centerX - a.startX) * Math.min(1, t * 2);
+          this.player.y = a.startY - t * 16;
+          this.player.walkFrame = (a.frame >> 2) % 4;
+        } else {
+          this.player.walkFrame = 0;
+        }
+      } else {
+        this.player.y = a.startY + (a.frame / a.totalFrames) * 14;
+        this.player.walkFrame = (a.frame >> 2) % 4;
+      }
       if (a.frame >= a.totalFrames) {
         const { targetMap, spawnTx, spawnTy, dir } = a;
         this.doorAnim = { ...a, done: true };
@@ -2130,11 +2152,17 @@ export class SnapGearPixelWorld {
       drawSqlAdminBuilding(ctx, 17 * TILE, 9.9 * TILE, this.tick);
       drawFountain(ctx, 10 * TILE, 10 * TILE, this.tick);
       drawPlazaCameraLandmark(ctx, 11 * TILE, 5 * TILE, this.tick, this.cameraFlash);
-      // Draw darkened open doorway while character steps inside
+      // Draw exact pixel-aligned sliding door opening inside the building's real door frame
       if (this.doorAnim && this.doorAnim.mode === "enter") {
+        const d = this.doorAnim.door;
         const openProgress = Math.min(1, this.doorAnim.frame / 8);
-        const openW = Math.round(16 * openProgress);
-        px(ctx, this.doorAnim.doorX + Math.round((16 - openW) / 2), this.doorAnim.doorY, "#121620", openW, 20);
+        // Dark interior doorway revealed behind parting door panels
+        px(ctx, d.x, d.y, "#121620", d.w, d.h);
+        const halfClosed = Math.max(0, Math.round((d.w / 2) * (1 - openProgress)));
+        if (halfClosed > 0) {
+          px(ctx, d.x, d.y, d.panel, halfClosed, d.h);
+          px(ctx, d.x + d.w - halfClosed, d.y, d.panel, halfClosed, d.h);
+        }
       }
     }
 
@@ -2200,7 +2228,7 @@ export class SnapGearPixelWorld {
     entities.sort((a, b) => a.y - b.y);
     for (const ent of entities) ent.draw();
 
-    if (this.hoverZone) {
+    if (this.hoverZone && !this.doorAnim) {
       const z = this.hoverZone;
       ctx.strokeStyle = "rgba(255, 240, 120, 0.92)";
       ctx.lineWidth = 1;
