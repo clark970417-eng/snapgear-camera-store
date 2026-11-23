@@ -275,11 +275,21 @@ function openModal(id, opts = {}) {
 }
 
 function closeAllModals(focusCanvas = true) {
+  const wasLockedAdmin = state.activeModalId === "modalAdmin" && adminPanel && !adminPanel.authenticated;
   document.querySelectorAll(".gba-backdrop.on").forEach((m) => m.classList.remove("on"));
   state.activeModalId = null;
   document.body.classList.remove("modal-open");
   if (world) world.setModalOpen(false);
   if (focusCanvas) document.getElementById("worldCanvas")?.focus();
+  if (wasLockedAdmin && focusCanvas) {
+    showDialogue(
+      [
+        "Forgot the admin password? Let me think...",
+        "Oh! The password is 0417!"
+      ],
+      [{ label: "🔓 Enter Password", onClick: () => openModal("modalAdmin") }]
+    );
+  }
 }
 
 function rerenderActiveModal() {
