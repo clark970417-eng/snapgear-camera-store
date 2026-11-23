@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101418">
+  <title>SnapGear Camera Store | Pixel-Art D2C Storefront &amp; SQLite Backend</title>
+  <meta name="description" content="SnapGear Camera Store — Direct-to-Consumer camera accessories storefront styled as an interactive pixel-art town, powered live by SQLite with full SQL admin console.">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <!-- Accessible text fallback mirroring the live SQLite storefront -->
+  <main class="sr" aria-label="SnapGear Camera Store product catalog overview">
+    <h1>SnapGear Camera Store — Direct-to-Consumer Camera Accessories</h1>
+    <p>SnapGear is a retail camera accessory store selling genuine Sony batteries, chargers, Bluetooth shooting grips, SanDisk 128GB SD cards, and Manfrotto PIXI mini tripods, backed live by SQLite.</p>
+    <ul>
+      <li>Sony NP-FZ100 Battery — NT$1,980 (Sony Distributor)</li>
+      <li>Sony BC-QZ1 Charger — NT$2,480 (Sony Distributor)</li>
+      <li>SanDisk 128GB SD Card — NT$1,550 (Photo Gear Distributor)</li>
+      <li>Manfrotto PIXI Tripod — NT$990 (Photo Gear Distributor)</li>
+      <li>Sony GP-VPT2BT Grip — NT$3,980 (Sony Distributor)</li>
+    </ul>
+  </main>
+
+  <!-- Interactive GBA Pixel-Art Stage -->
+  <div id="stage">
+    <canvas id="worldCanvas" width="384" height="256" tabindex="0" role="application"
+      aria-label="SnapGear Camera Store pixel-art town and mart. Use arrow keys, WASD, or click to walk; press Z or click buildings and shelves to shop."></canvas>
+    <div id="worldLabels" aria-label="Interactive location and product labels"></div>
+    <div id="fade"></div>
+  </div>
+
+  <!-- GBA Top HUD Navigation Bar -->
+  <header id="hud-top">
+    <div class="hud-group">
+      <button id="musBtn" class="gba-pill" type="button" title="Toggle Chiptune Music (M)" aria-label="Toggle Music">♪</button>
+      <button id="navTown" class="gba-pill active" type="button">🗺 TOWN</button>
+      <button id="navMart" class="gba-pill" type="button">🏪 INSIDE MART</button>
+      <button id="navCatalog" class="gba-pill cta-shop" type="button">📷 SHOP CATALOG <span id="catalogCountBadge">(5)</span></button>
+      <button id="navOrders" class="gba-pill" type="button">🧾 ORDERS &amp; SERVICES</button>
+    </div>
+    <div class="hud-group">
+      <button id="navCart" class="gba-pill cta-cart" type="button">🛒 CART <span id="cartCountBadge" class="cart-badge">0</span></button>
+      <button id="navAdmin" class="gba-pill cta-sql" type="button" title="Open Password-Protected SQL Admin Panel">🔒 SQL ADMIN</button>
+      <button id="clockBtn" class="gba-pill" type="button" title="Click to preview Day / Dusk / Night / Auto">☀ --:--</button>
+    </div>
+  </header>
+
+  <!-- Wooden Location Plaque (akshayakula.com signature element) -->
+  <div id="titleBanner" class="px">SNAPGEAR CAMERA TOWN</div>
+
+  <!-- Bottom-Right Quick Action & Controls Dock -->
+  <div id="quickDock">
+    <div class="controls-hint hide-sm">WASD / ARROWS / CLICK TO WALK · CLICK ITEMS TO BUY · Z TO INTERACT</div>
+  </div>
+
+  <!-- Hover Pixel Tooltip -->
+  <div id="tip" class="px"></div>
+
+  <!-- Classic GBA Bottom Dialogue Box -->
+  <div id="dlg" class="px" role="status" aria-live="polite">
+    <span id="dlgText"></span>
+    <div id="dlgActions"></div>
+    <i class="more"></i>
+  </div>
+
+  <!-- Mobile Touch Controls -->
+  <div id="touchPad" aria-hidden="true"><div id="touchKnob"></div></div>
+  <div id="touchBtns" aria-hidden="true">
+    <div id="tbtnA" class="tbtn">A</div>
+    <div id="tbtnB" class="tbtn">B</div>
+  </div>
+
+  <!-- Toast Banner -->
+  <div id="toast" role="alert"></div>
+
+  <!-- ============ MODAL 1: D2C SHOP CATALOG & SERVICES ============ -->
+  <div id="modalCatalog" class="gba-backdrop" role="dialog" aria-modal="true" aria-label="SnapGear Camera Store Catalog">
+    <div class="gba-window">
+      <div class="gba-win-head">
+        <div>
+          <div class="gba-win-title">📷 SNAPGEAR D2C STOREFRONT</div>
+          <div class="gba-win-sub">All products, retail NTD prices, suppliers, and inventory quantities are queried live from SQLite.</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn-gba sm" id="catalogOpenCartBtn" type="button">🛒 Cart (<span id="catalogCartNum">0</span>)</button>
+          <button class="gba-win-close" data-close-modal="modalCatalog" type="button">✕ ESC</button>
+        </div>
+      </div>
+      <div class="gba-win-body" id="catalogBody"></div>
+    </div>
+  </div>
+
+  <!-- ============ MODAL 2: PRODUCT DETAIL & BUY NOW ============ -->
+  <div id="modalDetail" class="gba-backdrop" role="dialog" aria-modal="true" aria-label="Product Details">
+    <div class="gba-window narrow">
+      <div class="gba-win-head">
+        <div>
+          <div class="gba-win-title" id="detailModalTitle">PRODUCT DETAILS</div>
+          <div class="gba-win-sub" id="detailModalSub">Live SQLite Product Record</div>
+        </div>
+        <button class="gba-win-close" data-close-modal="modalDetail" type="button">✕ ESC</button>
+      </div>
+      <div class="gba-win-body" id="detailBody"></div>
+    </div>
+  </div>
+
+  <!-- ============ MODAL 3: SHOPPING CART & D2C CHECKOUT ============ -->
+  <div id="modalCart" class="gba-backdrop" role="dialog" aria-modal="true" aria-label="Shopping Cart and Checkout">
+    <div class="gba-window">
+      <div class="gba-win-head">
+        <div>
+          <div class="gba-win-title">🛒 SNAPGEAR D2C CHECKOUT</div>
+          <div class="gba-win-sub">Submitting an order executes an atomic SQLite Sale ('S') transaction across orders, order_items, and stock_changes.</div>
+        </div>
+        <button class="gba-win-close" data-close-modal="modalCart" type="button">✕ ESC</button>
+      </div>
+      <div class="gba-win-body" id="cartBody"></div>
+    </div>
+  </div>
+
+  <!-- ============ MODAL 4: ORDERS, TRANSACTIONS & STORE SERVICES ============ -->
+  <div id="modalOrders" class="gba-backdrop" role="dialog" aria-modal="true" aria-label="Orders and Store Services">
+    <div class="gba-window">
+      <div class="gba-win-head">
+        <div>
+          <div class="gba-win-title">🧾 ORDERS, INVENTORY LEDGER &amp; SERVICES</div>
+          <div class="gba-win-sub">Live view of Sale (S), Purchase (P), Restock (R), and Refund (F) transactions in SQLite.</div>
+        </div>
+        <button class="gba-win-close" data-close-modal="modalOrders" type="button">✕ ESC</button>
+      </div>
+      <div class="gba-win-body" id="ordersBody"></div>
+    </div>
+  </div>
+
+  <!-- ============ MODAL 5: SQL ADMIN PANEL ============ -->
+  <div id="modalAdmin" class="gba-backdrop" role="dialog" aria-modal="true" aria-label="SnapGear SQLite Admin Console">
+    <div class="gba-window">
+      <div class="gba-win-head">
+        <div>
+          <div class="gba-win-title">🗄 SNAPGEAR SQL ADMIN PANEL</div>
+          <div class="gba-win-sub">Password-protected SQLite console: visual CRUD editor, raw SQL queries, S/P/R/F transactions, and database backup.</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <a href="/admin" target="_blank" rel="noopener" class="btn-gba sm" style="text-decoration:none;">↗ Open /admin</a>
+          <button class="gba-win-close" data-close-modal="modalAdmin" type="button">✕ ESC</button>
+        </div>
+      </div>
+      <div class="gba-win-body" id="adminBody"></div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/store-app.js"></script>
+</body>
+</html>

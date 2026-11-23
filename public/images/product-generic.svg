@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800">
+  <defs>
+    <radialGradient id="bg" cx="46%" cy="38%" r="72%">
+      <stop offset="0%" stop-color="#f6f3ea"/>
+      <stop offset="100%" stop-color="#e7e1d5"/>
+    </radialGradient>
+    <linearGradient id="darkMetal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3a3d45"/>
+      <stop offset="50%" stop-color="#22242a"/>
+      <stop offset="100%" stop-color="#131418"/>
+    </linearGradient>
+    <linearGradient id="woodGrip" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#5d3b22"/>
+      <stop offset="45%" stop-color="#8c5a34"/>
+      <stop offset="100%" stop-color="#482c18"/>
+    </linearGradient>
+    <linearGradient id="silver" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8d929a"/>
+      <stop offset="50%" stop-color="#eef1f5"/>
+      <stop offset="100%" stop-color="#7c8088"/>
+    </linearGradient>
+    <filter id="blur" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+  </defs>
+  <rect width="800" height="800" fill="url(#bg)"/>
+  <ellipse cx="408" cy="634" rx="180" ry="34" fill="#2a241c" opacity="0.22" filter="url(#blur)"/>
+  <!-- Camera Accessory Side Handle / Cage Grip silhouette -->
+  <rect x="330" y="210" width="110" height="390" rx="44" fill="url(#darkMetal)"/>
+  <rect x="348" y="254" width="66" height="302" rx="28" fill="url(#woodGrip)"/>
+  <!-- NATO clamp mount bracket -->
+  <rect x="424" y="278" width="96" height="170" rx="14" fill="url(#darkMetal)"/>
+  <rect x="444" y="304" width="56" height="118" rx="8" fill="#181a1f" stroke="#454a54" stroke-width="3"/>
+  <!-- Red locking thumbscrew -->
+  <circle cx="472" cy="364" r="24" fill="#c62228"/>
+  <circle cx="472" cy="364" r="14" fill="#23252a"/>
+  <!-- Top cold shoe mount -->
+  <rect x="352" y="186" width="68" height="28" rx="6" fill="url(#silver)"/>
+  <rect x="366" y="192" width="40" height="10" rx="2" fill="#23252a"/>
+</svg>

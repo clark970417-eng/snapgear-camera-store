@@ -1,0 +1,14 @@
+{
+  "name": "snapgear-camera-store",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "SnapGear Camera Store — Pixel-Art D2C Storefront & Live SQLite Admin Console",
+  "scripts": {
+    "start": "node server.mjs",
+    "reset-db": "node -e \"import('./lib/db.mjs').then(m => { m.resetDatabase(); console.log('SnapGear SQLite reset complete.'); })\""
+  },
+  "engines": {
+    "node": "22.x"
+  }
+}
