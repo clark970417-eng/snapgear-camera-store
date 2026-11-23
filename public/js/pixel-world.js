@@ -1714,7 +1714,7 @@ export class SnapGearPixelWorld {
     }
 
     const dash = this.keys.has("ShiftLeft") || this.keys.has("ShiftRight") || this.touchVec.dash;
-    const speed = dash ? 2.15 : 1.3;
+    const speed = dash ? 3.4 : 2.2;
     let dx = 0;
     let dy = 0;
 
@@ -1755,7 +1755,7 @@ export class SnapGearPixelWorld {
           act();
         }
       } else {
-        const stepS = 1.65;
+        const stepS = 2.6;
         this.player.x += (ddx / dist) * stepS;
         this.player.y += (ddy / dist) * stepS;
         this.player.dir = Math.abs(ddx) >= Math.abs(ddy) ? (ddx < 0 ? "left" : "right") : (ddy < 0 ? "up" : "down");
