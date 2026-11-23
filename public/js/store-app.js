@@ -1076,7 +1076,19 @@ async function init() {
     showToast(`Lighting mode: ${mode.toUpperCase()}`);
   });
 
-  document.getElementById("dlg")?.addEventListener("click", advanceDialogue);
+  document.getElementById("dlg")?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    advanceDialogue();
+  });
+
+  // Clicking/tapping anywhere on the screen advances an open dialogue box
+  window.addEventListener("pointerdown", (e) => {
+    if (!state.dialogue.open || state.activeModalId) return;
+    if (e.target.closest("#dlgActions button") || e.target.closest("#hud-top")) return;
+    e.preventDefault();
+    e.stopPropagation();
+    advanceDialogue();
+  }, { capture: true });
 
   // Close modal buttons & backdrop click & ESC key
   document.querySelectorAll("[data-close-modal]").forEach((btn) => {

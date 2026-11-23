@@ -39,7 +39,21 @@ html, body {
   background: var(--void);
   color: var(--gba-ink);
   font-family: var(--font-ui);
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
+}
+
+input, textarea, select, pre, code {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+img {
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
 body.admin-standalone {
