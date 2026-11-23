@@ -114,10 +114,11 @@ async function apiJson(url, options = {}) {
 }
 
 export class SnapGearAdminPanel {
-  constructor(container, { onDataChanged, onToast }) {
+  constructor(container, { onDataChanged, onToast, onWrongPassword }) {
     this.container = container;
     this.onDataChanged = onDataChanged || (() => {});
     this.onToast = onToast || (() => {});
+    this.onWrongPassword = onWrongPassword || null;
 
     this.authenticated = false;
     this.loginError = null;
@@ -184,7 +185,11 @@ export class SnapGearAdminPanel {
           await this.refreshAll();
         } catch (err) {
           this.loginError = err.message || "Incorrect administrator password.";
-          this.renderLoginGate();
+          if (this.onWrongPassword) {
+            this.onWrongPassword();
+          } else {
+            this.renderLoginGate();
+          }
         }
       });
     }

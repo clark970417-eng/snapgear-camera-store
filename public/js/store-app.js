@@ -256,7 +256,17 @@ function openModal(id, opts = {}) {
     if (!adminPanel) {
       adminPanel = new SnapGearAdminPanel(document.getElementById("adminBody"), {
         onDataChanged: () => fetchStorefront(),
-        onToast: showToast
+        onToast: showToast,
+        onWrongPassword: () => {
+          closeAllModals();
+          showDialogue(
+            [
+              "Hmm... wrong password! Wait, what was the admin password again?",
+              "Oh! I remember now — the password is 0417!"
+            ],
+            [{ label: "🔓 Try Password Again", onClick: () => openModal("modalAdmin", opts) }]
+          );
+        }
       });
     }
     if (opts.tab) adminPanel.activeTab = opts.tab;
