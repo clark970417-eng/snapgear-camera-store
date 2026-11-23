@@ -820,6 +820,7 @@ export class SnapGearPixelWorld {
         tx: 9,
         ty: 6,
         dir: "down",
+        patrol: [[9, 6], [10, 4], [13, 4], [13, 6]],
         hair: "#241d28",
         skin: "#f2c498",
         shirt: "#3868c8",
@@ -844,8 +845,9 @@ export class SnapGearPixelWorld {
       {
         id: "npc_alex",
         tx: 14,
-        ty: 6,
+        ty: 7,
         dir: "left",
+        patrol: [[14, 7], [18, 7], [18, 8], [13, 8]],
         hair: "#1c1c24",
         skin: "#eab98c",
         shirt: "#2d8a68",
@@ -863,8 +865,9 @@ export class SnapGearPixelWorld {
       {
         id: "npc_mia",
         tx: 8,
-        ty: 11,
+        ty: 10,
         dir: "right",
+        patrol: [[8, 10], [8, 14], [5, 14], [8, 14]],
         hair: "#5a3424",
         skin: "#f6cca4",
         shirt: "#d85058",
@@ -881,9 +884,10 @@ export class SnapGearPixelWorld {
       },
       {
         id: "npc_jason",
-        tx: 15,
-        ty: 12,
+        tx: 14,
+        ty: 11,
         dir: "up",
+        patrol: [[14, 11], [14, 14], [17, 14], [14, 14]],
         hair: "#322820",
         skin: "#e6b486",
         shirt: "#c88830",
@@ -902,7 +906,14 @@ export class SnapGearPixelWorld {
         }
       }
     ];
-    for (const npc of townNpcs) townSolid[npc.ty][npc.tx] = true;
+    for (const npc of townNpcs) {
+      npc.px = npc.tx * TILE;
+      npc.py = npc.ty * TILE;
+      npc.walkFrame = 0;
+      npc.stepAccum = 0;
+      npc.patrolIdx = 1;
+      npc.pause = 40 + Math.floor(Math.random() * 60);
+    }
 
     // =====================================================================
     // MAP 2: MY HOME (18x12 tiles = 288x192 — Character's cozy home!)
@@ -1404,10 +1415,10 @@ export class SnapGearPixelWorld {
     const cfg = this.mapConfigs[this.mapId];
     if (!cfg) return null;
     for (const npc of cfg.npcs) {
-      const nx = npc.tx * TILE;
-      const ny = npc.ty * TILE - 4;
+      const nx = npc.px ?? npc.tx * TILE;
+      const ny = (npc.py ?? npc.ty * TILE) - 4;
       if (wx >= nx - 2 && wx <= nx + TILE + 2 && wy >= ny && wy <= ny + TILE + 6) {
-        return { ...npc, x: nx, y: ny, w: TILE, h: TILE + 4, approach: { tx: npc.tx, ty: npc.ty + 1 } };
+        return { ...npc, x: nx, y: ny, w: TILE, h: TILE + 4, approach: { tx: Math.round(nx / TILE), ty: Math.round((ny + 4) / TILE) + 1 } };
       }
     }
     for (const z of cfg.zones) {
@@ -1593,6 +1604,51 @@ export class SnapGearPixelWorld {
     }
 
     if (this.modalOpen || this.cb.isDialogueOpen()) return;
+
+    // Update patrolling NPCs
+    const curCfg = this.mapConfigs[this.mapId];
+    if (curCfg && curCfg.npcs) {
+      for (const npc of curCfg.npcs) {
+        if (!npc.patrol || npc.patrol.length < 2) continue;
+        if (npc.px == null) {
+          npc.px = npc.tx * TILE;
+          npc.py = npc.ty * TILE;
+        }
+        // Pause if player is standing close by
+        if (Math.hypot(this.player.x - npc.px, this.player.y - npc.py) < 22) {
+          npc.walkFrame = 0;
+          continue;
+        }
+        if (npc.pause > 0) {
+          npc.pause--;
+          npc.walkFrame = 0;
+          continue;
+        }
+        const [gx, gy] = npc.patrol[npc.patrolIdx % npc.patrol.length];
+        const tx = gx * TILE;
+        const ty = gy * TILE;
+        const dxN = tx - npc.px;
+        const dyN = ty - npc.py;
+        const distN = Math.hypot(dxN, dyN);
+        const npcSpeed = 0.55;
+        if (distN <= npcSpeed) {
+          npc.px = tx;
+          npc.py = ty;
+          npc.patrolIdx = (npc.patrolIdx + 1) % npc.patrol.length;
+          npc.pause = 60 + ((this.tick + npc.tx * 17) % 80);
+          npc.walkFrame = 0;
+        } else {
+          npc.px += (dxN / distN) * npcSpeed;
+          npc.py += (dyN / distN) * npcSpeed;
+          npc.dir = Math.abs(dxN) >= Math.abs(dyN) ? (dxN < 0 ? "left" : "right") : (dyN < 0 ? "up" : "down");
+          npc.stepAccum = (npc.stepAccum || 0) + npcSpeed;
+          if (npc.stepAccum >= 6) {
+            npc.stepAccum = 0;
+            npc.walkFrame = ((npc.walkFrame || 0) + 1) % 4;
+          }
+        }
+      }
+    }
 
     const dash = this.keys.has("ShiftLeft") || this.keys.has("ShiftRight") || this.touchVec.dash;
     const speed = dash ? 2.15 : 1.3;
@@ -2037,18 +2093,22 @@ export class SnapGearPixelWorld {
     }
 
     const entities = [
-      ...cfg.npcs.map((n) => ({
-        y: n.ty * TILE,
-        draw: () =>
-          drawChibi(ctx, n.tx * TILE, n.ty * TILE, {
-            dir: n.dir,
-            frame: 0,
-            hair: n.hair,
-            skin: n.skin,
-            shirt: n.shirt,
-            pants: n.pants
-          })
-      })),
+      ...cfg.npcs.map((n) => {
+        const nx = n.px ?? n.tx * TILE;
+        const ny = n.py ?? n.ty * TILE;
+        return {
+          y: ny,
+          draw: () =>
+            drawChibi(ctx, Math.round(nx), Math.round(ny), {
+              dir: n.dir,
+              frame: n.walkFrame || 0,
+              hair: n.hair,
+              skin: n.skin,
+              shirt: n.shirt,
+              pants: n.pants
+            })
+        };
+      }),
       {
         y: this.player.y,
         draw: () =>
