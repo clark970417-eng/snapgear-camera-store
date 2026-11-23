@@ -19,6 +19,7 @@ function fmtNtd(amount) {
 const state = {
   storefront: null,
   cart: [], // [{ product_id, quantity }]
+  myPurchases: [], // Session purchases [{ order_id, order_date, customer_name, product_id, name, quantity, unit_price }]
   catalogFilterSupplier: "all",
   catalogSearch: "",
   catalogSort: "id",
@@ -493,10 +494,10 @@ function openProductDetail(productId) {
               <span id="detailQtyVal">${qty}</span>
               <button type="button" id="detailQtyInc">+</button>
             </div>
-            <button class="btn-gba primary" id="detailAddBtn" ${prod.stock <= 0 ? "disabled" : ""} type="button">+ Add to Cart</button>
-            <button class="btn-gba buy-now" id="detailBuyBtn" ${prod.stock <= 0 ? "disabled" : ""} type="button">⚡ Buy Now</button>
+            <button class="btn-gba primary" id="detailAddBtn" ${prod.stock <= 0 ? "disabled" : ""} type="button">🛒 Add to Cart</button>
             <button class="btn-gba sm" id="detailBackCatalogBtn" type="button">← All Products</button>
           </div>
+          <p style="font-size:12px;color:#5a6072;margin:8px 0 0;">Add items to your cart here, then walk to the <strong>💳 CHECKOUT</strong> counter (or open Cart) to pay.</p>
         </div>
       </div>
 
@@ -542,8 +543,10 @@ function openProductDetail(productId) {
       qty = Math.min(Math.max(1, prod.stock), qty + 1);
       draw();
     });
-    body.querySelector("#detailAddBtn")?.addEventListener("click", () => addToCart(prod.product_id, qty, false));
-    body.querySelector("#detailBuyBtn")?.addEventListener("click", () => addToCart(prod.product_id, qty, true));
+    body.querySelector("#detailAddBtn")?.addEventListener("click", () => {
+      addToCart(prod.product_id, qty, false);
+      showToast(`Added ${qty}× ${prod.name} to cart — go to 💳 CHECKOUT to pay!`);
+    });
     body.querySelector("#detailBackCatalogBtn")?.addEventListener("click", () => openModal("modalCatalog"));
   };
 
@@ -762,6 +765,17 @@ function renderCartModal() {
       state.cart = [];
       state.lastReceipt = json.receipt;
       state.storefront = json.storefront;
+      for (const item of json.receipt.items || []) {
+        state.myPurchases.unshift({
+          order_id: json.receipt.order_id,
+          order_date: json.receipt.order_date,
+          customer_name: json.receipt.customer_name,
+          product_id: item.product_id,
+          name: item.name,
+          quantity: item.quantity,
+          unit_price: item.unit_price
+        });
+      }
       updateHudBadges();
       if (world) world.setStoreData(state.storefront);
       retroAudio.purchaseFanfare();
@@ -782,12 +796,53 @@ function renderCartModal() {
 function renderOrdersModal() {
   const body = document.getElementById("ordersBody");
   if (!body || !state.storefront) return;
-  const { orders, stockLedger, services, stats } = state.storefront;
+  const { orders, products, stockLedger, services, stats } = state.storefront;
   const refundedSaleIds = new Set(orders.filter((o) => o.order_type === "F").map((o) => o.related_order_id));
+  const prodById = new Map(products.map((p) => [p.product_id, p]));
+
+  // Aggregate items bought by the player (this session first, plus non-refunded SQLite sales)
+  const ownedItems = state.myPurchases.length > 0
+    ? state.myPurchases
+    : orders
+        .filter((o) => o.order_type === "S" && !refundedSaleIds.has(o.order_id))
+        .flatMap((o) =>
+          o.items.map((i) => ({
+            order_id: o.order_id,
+            order_date: o.order_date,
+            customer_name: o.customer_name,
+            product_id: i.product_id,
+            name: i.product_name,
+            quantity: i.quantity,
+            unit_price: i.unit_price
+          }))
+        );
 
   const typeLabel = { S: "S · Sale", P: "P · Purchase", R: "R · Restock", F: "F · Refund" };
 
   body.innerHTML = `
+    <h3 class="px" style="margin:0 0 10px;font-size:18px;">📷 MY PURCHASED GEAR (${state.myPurchases.length > 0 ? "BOUGHT THIS SESSION" : "ACTIVE STORE ORDERS"})</h3>
+    ${
+      ownedItems.length === 0
+        ? `<div class="alert-banner ok" style="margin-bottom:16px;">You haven't bought any gear yet! Visit <strong>SONY PRO</strong> or <strong>PHOTO GEAR</strong>, add items to your cart, and pay at the <strong>💳 CHECKOUT</strong> counter.</div>`
+        : `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-bottom:18px;">
+            ${ownedItems
+              .map((it) => {
+                const p = prodById.get(Number(it.product_id));
+                const img = p?.meta?.image || "/images/product-generic.svg";
+                return `
+                  <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#f8faff;border:2px solid #9ab4e8;border-radius:8px;">
+                    <img src="${esc(img)}" alt="${esc(it.name)}" style="width:52px;height:52px;object-fit:cover;border-radius:6px;border:1.5px solid #cbd4e6;background:#f2efe4;">
+                    <div style="min-width:0;font-size:12.5px;">
+                      <strong style="display:block;color:#1d2433;">${it.quantity}× ${esc(it.name)}</strong>
+                      <span style="color:#1f48a0;font-weight:700;">${fmtNtd(it.quantity * it.unit_price)}</span>
+                      <span style="display:block;color:#62687a;font-size:11px;">Order #${it.order_id} · ${esc(it.customer_name || "")} · ${esc(it.order_date)}</span>
+                    </div>
+                  </div>`;
+              })
+              .join("")}
+          </div>`
+    }
+
     <div class="kpi-grid">
       <div class="kpi-card"><div class="kpi-label">Total Orders</div><div class="kpi-val">${stats.orderCount}</div></div>
       <div class="kpi-card"><div class="kpi-label">Net D2C Revenue</div><div class="kpi-val">${fmtNtd(stats.netSalesRevenue)}</div></div>
@@ -923,6 +978,19 @@ async function init() {
     },
     openOrders: () => openModal("modalOrders"),
     openAdmin: (tab) => openModal("modalAdmin", { tab }),
+    getPurchasedProducts: () => {
+      const products = state.storefront?.products || [];
+      const prodById = new Map(products.map((p) => [p.product_id, p]));
+      const list = state.myPurchases.length > 0
+        ? state.myPurchases
+        : (state.storefront?.orders || [])
+            .filter((o) => o.order_type === "S")
+            .flatMap((o) => o.items);
+      return list.map((it) => {
+        const p = prodById.get(Number(it.product_id));
+        return { product_id: it.product_id, spriteKind: p?.meta?.spriteKind || "handle" };
+      });
+    },
     showDialogue,
     advanceDialogue,
     closeDialogue,

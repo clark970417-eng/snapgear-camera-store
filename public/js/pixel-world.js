@@ -1305,12 +1305,12 @@ export class SnapGearPixelWorld {
         el.className = `wl-product ${soldOut ? "soldout" : ""}`;
         el.style.left = toPctX(z.tx * TILE + TILE / 2);
         el.style.top = toPctY((z.ty + 1) * TILE + 1);
-        el.title = `${p.name} — NT$${Number(p.price).toLocaleString()} (Stock: ${p.stock}). Click to buy!`;
+        el.title = `${p.name} — NT$${Number(p.price).toLocaleString()} (Stock: ${p.stock}). Click to add to cart, then pay at Checkout!`;
         el.innerHTML = `
           <span class="wl-product-name">${shortProductLabel(p.name)}</span>
           <span class="wl-product-row">
             <span class="wl-product-price">NT$${Number(p.price).toLocaleString()}</span>
-            <span class="wl-product-buy">${soldOut ? "OUT" : "BUY"}</span>
+            <span class="wl-product-buy">${soldOut ? "OUT" : "+ CART"}</span>
           </span>
         `;
         el.addEventListener("click", (e) => {
@@ -1857,12 +1857,10 @@ export class SnapGearPixelWorld {
     px(ctx, 2 * TILE + 2, 8.3 * TILE, "#3878c8", 3 * TILE - 4, 22); // blanket
     px(ctx, 2 * TILE + 2, 8.3 * TILE, "#6ca8f0", 3 * TILE - 4, 4);
 
-    // Camera Gear Display Cabinet (bottom-right x=13..15, y=7..8)
+    // Camera Gear Display Cabinet (bottom-right x=13..15, y=7..8) — contents rendered dynamically from purchased gear!
     box(ctx, 13 * TILE, 7 * TILE, 3 * TILE, 2 * TILE, "#8a5a38", "#3e2618");
-    box(ctx, 13.2 * TILE, 7.2 * TILE, 42, 24, "#243040", "#3e2618");
-    px(ctx, 13.4 * TILE, 7.6 * TILE, "#f4d060", 8, 6);
-    px(ctx, 14.3 * TILE, 7.6 * TILE, "#68b8f8", 8, 6);
-    px(ctx, 15.1 * TILE, 7.6 * TILE, "#e04840", 8, 6);
+    box(ctx, 13.2 * TILE, 7.2 * TILE, 42, 24, "#1e2a38", "#3e2618");
+    px(ctx, 13.3 * TILE, 7.9 * TILE, "#304054", 38, 1);
 
     // Potted plants
     for (const [pxx, pyy] of [[18, 160], [256, 160]]) {
@@ -2008,6 +2006,18 @@ export class SnapGearPixelWorld {
       drawSqlAdminBuilding(ctx, 17 * TILE, 9.9 * TILE, this.tick);
       drawFountain(ctx, 10 * TILE, 10 * TILE, this.tick);
       drawPlazaCameraLandmark(ctx, 11 * TILE, 5 * TILE, this.tick, this.cameraFlash);
+    }
+
+    // Dynamically render purchased camera gear sprites inside MY HOME's display cabinet!
+    if (this.mapId === "home") {
+      const purchased = this.cb.getPurchasedProducts?.() || [];
+      const uniqueKinds = [];
+      for (const item of purchased) {
+        if (!uniqueKinds.includes(item.spriteKind)) uniqueKinds.push(item.spriteKind);
+      }
+      uniqueKinds.slice(0, 3).forEach((kind, idx) => {
+        drawProductPixelSprite(ctx, kind, 13 * TILE + 11 + idx * 13, 7 * TILE + 16, this.tick);
+      });
     }
 
     // Dynamic Product Pedestals in SONY PRO & PHOTO GEAR stores
