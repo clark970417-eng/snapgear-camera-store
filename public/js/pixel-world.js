@@ -1220,13 +1220,16 @@ export class SnapGearPixelWorld {
     this.player.path = [];
     this.player.pendingAction = null;
 
-    // Play smooth Pokémon-style step-through-door animation when entering a building from Town!
-    if (this.mapId === "town" && targetMap !== "town") {
+    // Play smooth Pokémon-style step-through-door animation both entering AND exiting rooms!
+    const isEntering = this.mapId === "town" && targetMap !== "town";
+    const isExiting = this.mapId !== "town" && targetMap === "town";
+    if (isEntering || isExiting) {
       retroAudio.door();
-      this.player.dir = "up";
+      this.player.dir = isEntering ? "up" : "down";
       this.doorAnim = {
+        mode: isEntering ? "enter" : "exit",
         frame: 0,
-        totalFrames: 22,
+        totalFrames: 20,
         startY: this.player.y,
         doorX: Math.round(this.player.x) - 1,
         doorY: Math.round(this.player.y) - 16,
@@ -1653,12 +1656,14 @@ export class SnapGearPixelWorld {
 
     if (this.modalOpen || this.cb.isDialogueOpen()) return;
 
-    // Step-through-door entry animation
+    // Step-through-door entry & exit animation
     if (this.doorAnim) {
       const a = this.doorAnim;
+      if (a.done) return;
       a.frame++;
-      this.player.dir = "up";
-      this.player.y = a.startY - (a.frame / a.totalFrames) * 14;
+      const isEnter = a.mode === "enter";
+      this.player.dir = isEnter ? "up" : "down";
+      this.player.y = a.startY + (isEnter ? -1 : 1) * (a.frame / a.totalFrames) * 14;
       this.player.walkFrame = (a.frame >> 2) % 4;
       if (a.frame >= a.totalFrames) {
         const { targetMap, spawnTx, spawnTy, dir } = a;
@@ -2126,7 +2131,7 @@ export class SnapGearPixelWorld {
       drawFountain(ctx, 10 * TILE, 10 * TILE, this.tick);
       drawPlazaCameraLandmark(ctx, 11 * TILE, 5 * TILE, this.tick, this.cameraFlash);
       // Draw darkened open doorway while character steps inside
-      if (this.doorAnim) {
+      if (this.doorAnim && this.doorAnim.mode === "enter") {
         const openProgress = Math.min(1, this.doorAnim.frame / 8);
         const openW = Math.round(16 * openProgress);
         px(ctx, this.doorAnim.doorX + Math.round((16 - openW) / 2), this.doorAnim.doorY, "#121620", openW, 20);
