@@ -214,14 +214,21 @@ function drawMyHomeBuilding(ctx, x, y, isNight) {
   // White trim porch surround
   box(ctx, x + 36, y + 38, 24, 30, "#f4f2ec", "#3e241e");
 
-  // Windows with dark shutters
+  // Windows with dark shutters & flower planter boxes
   const wc = isNight ? "#ffe498" : "#a8dcfa";
   for (const wx of [x + 12, x + 68]) {
     px(ctx, wx - 3, y + 40, "#4c2c28", 3, 15);
     px(ctx, wx + 16, y + 40, "#4c2c28", 3, 15);
     box(ctx, wx, y + 40, 16, 15, wc, "#fcfcfc");
+    px(ctx, wx + 2, y + 42, "#ffffff", 4, 2);
     px(ctx, wx + 7, y + 41, "#fcfcfc", 2, 13);
     px(ctx, wx + 1, y + 47, "#fcfcfc", 14, 2);
+    // Cute flower planter box under window
+    box(ctx, wx - 1, y + 55, 18, 5, "#7c4a2a", "#3e2214");
+    px(ctx, wx + 2, y + 54, "#4aa848", 12, 2);
+    px(ctx, wx + 3, y + 53, "#e84858", 2, 2);
+    px(ctx, wx + 9, y + 53, "#f8d858", 2, 2);
+    px(ctx, wx + 13, y + 53, "#e84858", 2, 2);
   }
 
   // Front red cottage door
@@ -377,6 +384,7 @@ function drawChibi(ctx, x, y, opts) {
   } = opts;
 
   const step = frame === 1 ? -1 : frame === 3 ? 1 : 0;
+  const idleBob = frame === 0 && opts.bob ? opts.bob : 0;
   px(ctx, x + 3, y + 14, "rgba(18,32,26,0.3)", 10, 3);
 
   const leftLegY = y + 12 + (step < 0 ? -1 : 0);
@@ -386,36 +394,37 @@ function drawChibi(ctx, x, y, opts) {
   px(ctx, x + 4, leftLegY, pants, 3, 2);
   px(ctx, x + 9, rightLegY, pants, 3, 2);
 
-  box(ctx, x + 3, y + 6, 10, 7, shirt, OUTLINE);
-  px(ctx, x + 4, y + 7, shade(shirt, 1.18), 8, 2);
+  const by = y + idleBob;
+  box(ctx, x + 3, by + 6, 10, 7, shirt, OUTLINE);
+  px(ctx, x + 4, by + 7, shade(shirt, 1.18), 8, 2);
   if (cameraStrap) {
-    px(ctx, x + 5, y + 7, "#202228", 1, 3);
-    px(ctx, x + 10, y + 7, "#202228", 1, 3);
-    px(ctx, x + 6, y + 9, "#2a2e38", 4, 3);
-    px(ctx, x + 7, y + 10, "#70c0ff", 2, 1);
+    px(ctx, x + 5, by + 7, "#202228", 1, 3);
+    px(ctx, x + 10, by + 7, "#202228", 1, 3);
+    px(ctx, x + 6, by + 9, "#2a2e38", 4, 3);
+    px(ctx, x + 7, by + 10, "#70c0ff", 2, 1);
   }
 
-  px(ctx, x + 2, y + 7 + (step > 0 ? 1 : 0), skin, 1, 4);
-  px(ctx, x + 13, y + 7 + (step < 0 ? 1 : 0), skin, 1, 4);
+  px(ctx, x + 2, by + 7 + (step > 0 ? 1 : 0), skin, 1, 4);
+  px(ctx, x + 13, by + 7 + (step < 0 ? 1 : 0), skin, 1, 4);
 
-  box(ctx, x + 2, y - 3, 12, 10, skin, OUTLINE);
-  px(ctx, x + 2, y - 4, OUTLINE, 12, 5);
-  px(ctx, x + 3, y - 3, hair, 10, 4);
-  px(ctx, x + 4, y - 3, shade(hair, 1.25), 5, 1);
+  box(ctx, x + 2, by - 3, 12, 10, skin, OUTLINE);
+  px(ctx, x + 2, by - 4, OUTLINE, 12, 5);
+  px(ctx, x + 3, by - 3, hair, 10, 4);
+  px(ctx, x + 4, by - 3, shade(hair, 1.25), 5, 1);
 
   if (dir === "up") {
-    px(ctx, x + 3, y - 1, hair, 10, 6);
+    px(ctx, x + 3, by - 1, hair, 10, 6);
   } else if (dir === "left") {
-    px(ctx, x + 3, y + 1, "#1e1e26", 2, 2);
-    px(ctx, x + 8, y - 1, hair, 5, 5);
+    px(ctx, x + 3, by + 1, "#1e1e26", 2, 2);
+    px(ctx, x + 8, by - 1, hair, 5, 5);
   } else if (dir === "right") {
-    px(ctx, x + 11, y + 1, "#1e1e26", 2, 2);
-    px(ctx, x + 3, y - 1, hair, 5, 5);
+    px(ctx, x + 11, by + 1, "#1e1e26", 2, 2);
+    px(ctx, x + 3, by - 1, hair, 5, 5);
   } else {
-    px(ctx, x + 5, y + 2, "#1e1e26", 2, 2);
-    px(ctx, x + 9, y + 2, "#1e1e26", 2, 2);
-    px(ctx, x + 5, y + 2, "#ffffff", 1, 1);
-    px(ctx, x + 9, y + 2, "#ffffff", 1, 1);
+    px(ctx, x + 5, by + 2, "#1e1e26", 2, 2);
+    px(ctx, x + 9, by + 2, "#1e1e26", 2, 2);
+    px(ctx, x + 5, by + 2, "#ffffff", 1, 1);
+    px(ctx, x + 9, by + 2, "#ffffff", 1, 1);
   }
 }
 
@@ -444,6 +453,7 @@ export class SnapGearPixelWorld {
     this.timeMode = "auto";
     this.cameraFlash = 0;
     this.doorAnim = null;
+    this.dustPuffs = [];
 
     this.player = {
       x: 11 * TILE,
@@ -1765,6 +1775,9 @@ export class SnapGearPixelWorld {
       if (this.player.stepAccum >= 7) {
         this.player.stepAccum = 0;
         this.player.walkFrame = (this.player.walkFrame + 1) % 4;
+        if (dash) {
+          this.dustPuffs.push({ x: this.player.x + 8, y: this.player.y + 15, life: 14 });
+        }
       }
       this.checkStepTriggers();
     } else if (this.player.path.length > 0) {
@@ -2152,6 +2165,15 @@ export class SnapGearPixelWorld {
       drawSqlAdminBuilding(ctx, 17 * TILE, 9.9 * TILE, this.tick);
       drawFountain(ctx, 10 * TILE, 10 * TILE, this.tick);
       drawPlazaCameraLandmark(ctx, 11 * TILE, 5 * TILE, this.tick, this.cameraFlash);
+      // Gentle rising chimney smoke puffs from MY HOME
+      for (let i = 0; i < 3; i++) {
+        const phase = ((this.tick + i * 32) % 96) / 96;
+        const sx = 2 * TILE + 79 + Math.round(Math.sin(phase * Math.PI * 2) * 3);
+        const sy = Math.round(1.6 * TILE - 1 - phase * 18);
+        const alpha = (1 - phase) * 0.45;
+        ctx.fillStyle = `rgba(248,248,252,${alpha.toFixed(2)})`;
+        ctx.fillRect(sx, sy, 3 + Math.round(phase * 2), 2 + Math.round(phase * 2));
+      }
       // Draw exact pixel-aligned sliding door opening inside the building's real door frame
       if (this.doorAnim && this.doorAnim.mode === "enter") {
         const d = this.doorAnim.door;
@@ -2194,6 +2216,18 @@ export class SnapGearPixelWorld {
       }
     }
 
+    // Render dash dust puffs
+    if (this.dustPuffs.length > 0) {
+      this.dustPuffs = this.dustPuffs.filter((d) => d.life > 0);
+      for (const d of this.dustPuffs) {
+        d.life--;
+        const a = (d.life / 14) * 0.65;
+        ctx.fillStyle = `rgba(240,236,224,${a.toFixed(2)})`;
+        ctx.fillRect(Math.round(d.x - 1), Math.round(d.y - (14 - d.life) * 0.15), 3, 2);
+      }
+    }
+
+    const idleBob = Math.floor(this.tick / 36) % 2;
     const entities = [
       ...cfg.npcs.map((n) => {
         const nx = n.px ?? n.tx * TILE;
@@ -2204,6 +2238,7 @@ export class SnapGearPixelWorld {
             drawChibi(ctx, Math.round(nx), Math.round(ny), {
               dir: n.dir,
               frame: n.walkFrame || 0,
+              bob: idleBob,
               hair: n.hair,
               skin: n.skin,
               shirt: n.shirt,
@@ -2217,6 +2252,7 @@ export class SnapGearPixelWorld {
           drawChibi(ctx, Math.round(this.player.x), Math.round(this.player.y), {
             dir: this.player.dir,
             frame: this.player.walkFrame,
+            bob: idleBob,
             hair: "#1e1e26",
             skin: "#f2c498",
             shirt: "#e04840",
