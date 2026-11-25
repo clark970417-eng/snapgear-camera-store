@@ -617,12 +617,24 @@ function renderCartModal() {
         <div>
           <h4 class="px" style="margin:0 0 8px;font-size:15px;">EXACT SQLITE STATEMENTS EXECUTED</h4>
           <div class="sql-preview-box">${esc(r.executed_sql.join("\n"))}</div>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+            <button class="btn-gba sm primary" id="copyReceiptSqlBtn" type="button">📋 Copy Purchase SQL</button>
+            <a href="/api/export-sql" download="snapgear-purchases.sql" class="btn-gba sm success" style="text-decoration:none;">⬇ Download Full .sql</a>
+          </div>
           <p style="font-size:12.5px;color:#555a6a;margin-top:8px;">
-            Both the D2C storefront catalog and the walkable SnapGear Mart display pedestals have updated their live inventory counts immediately.
+            Copy these exact statements or download the complete <code>.sql</code> file (all 6 tables + every purchase) to paste directly into any SQLite website.
           </p>
         </div>
       </div>
     `;
+    body.querySelector("#copyReceiptSqlBtn")?.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(r.executed_sql.join("\n"));
+        showToast("Copied purchase SQL to clipboard!");
+      } catch {
+        showToast("Copy failed — select the SQL box to copy.");
+      }
+    });
     body.querySelector("#receiptShopMoreBtn")?.addEventListener("click", () => {
       state.lastReceipt = null;
       openModal("modalCatalog");
@@ -840,7 +852,13 @@ function renderOrdersModal() {
   const typeLabel = { S: "S · Sale", P: "P · Purchase", R: "R · Restock", F: "F · Refund" };
 
   body.innerHTML = `
-    <h3 class="px" style="margin:0 0 10px;font-size:18px;">📷 MY PURCHASED GEAR (${state.myPurchases.length > 0 ? "BOUGHT THIS SESSION" : "ACTIVE STORE ORDERS"})</h3>
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;">
+      <h3 class="px" style="margin:0;font-size:18px;">📷 MY PURCHASED GEAR (${state.myPurchases.length > 0 ? "BOUGHT THIS SESSION" : "ACTIVE STORE ORDERS"})</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-gba sm primary" id="ordersCopyFullSqlBtn" type="button">📋 Copy Full SQL</button>
+        <a href="/api/export-sql" download="snapgear-purchases.sql" class="btn-gba sm success" style="text-decoration:none;">⬇ Download Full .sql</a>
+      </div>
+    </div>
     ${
       ownedItems.length === 0
         ? `<div class="alert-banner ok" style="margin-bottom:16px;">You haven't bought any gear yet! Visit <strong>SONY PRO</strong> or <strong>PHOTO GEAR</strong>, add items to your cart, and pay at the <strong>💳 CHECKOUT</strong> counter.</div>`
@@ -952,6 +970,16 @@ function renderOrdersModal() {
     </div>
   `;
 
+  body.querySelector("#ordersCopyFullSqlBtn")?.addEventListener("click", async () => {
+    try {
+      const res = await fetch("/api/export-sql", { cache: "no-store" });
+      const sql = await res.text();
+      await navigator.clipboard.writeText(sql);
+      showToast("Copied full SQLite script (tables + all purchases)!");
+    } catch {
+      showToast("Copy failed — use Download Full .sql instead.");
+    }
+  });
   body.querySelectorAll("[data-open-admin-tx]").forEach((btn) => {
     btn.addEventListener("click", () => openModal("modalAdmin", { tab: "tx" }));
   });
