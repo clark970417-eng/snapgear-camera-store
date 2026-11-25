@@ -120,7 +120,7 @@ export class SnapGearAdminPanel {
     this.onToast = onToast || (() => {});
     this.onWrongPassword = onWrongPassword || null;
 
-    this.authenticated = false;
+    this.authenticated = true;
     this.loginError = null;
     this.activeTab = "tables";
     this.schema = null;
@@ -136,19 +136,9 @@ export class SnapGearAdminPanel {
   }
 
   async mount() {
-    this.container.innerHTML = `<p style="padding:18px;color:#555;">Checking administrator session...</p>`;
-    try {
-      const auth = await apiJson("/api/admin/auth");
-      this.authenticated = Boolean(auth.authenticated);
-      if (this.authenticated) {
-        await this.refreshAll();
-      } else {
-        this.renderLoginGate();
-      }
-    } catch {
-      this.authenticated = false;
-      this.renderLoginGate();
-    }
+    this.authenticated = true;
+    this.container.innerHTML = `<p style="padding:18px;color:#555;">Loading SQLite database...</p>`;
+    await this.refreshAll();
   }
 
   renderLoginGate() {
@@ -285,7 +275,6 @@ export class SnapGearAdminPanel {
           <button class="tab-btn ${this.activeTab === "tx" ? "active" : ""}" data-admin-tab="tx" type="button">🔁 Transactions (S / P / R / F)</button>
           <button class="tab-btn ${this.activeTab === "schema" ? "active" : ""}" data-admin-tab="schema" type="button">🗄 Schema &amp; Backup</button>
         </div>
-        <button class="btn-gba sm" id="adminLogoutBtn" type="button">🔒 Lock Admin</button>
       </div>
 
       ${this.banner ? `<div class="alert-banner ${this.banner.type}">${esc(this.banner.text)}</div>` : ""}

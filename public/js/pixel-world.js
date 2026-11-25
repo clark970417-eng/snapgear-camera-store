@@ -1083,7 +1083,7 @@ export class SnapGearPixelWorld {
       {
         id: "sql_mainframe",
         kind: "station",
-        labelText: "🔒 OPEN SQL ADMIN",
+        labelText: "💻 OPEN SQL ADMIN",
         labelPos: { x: 9 * TILE, y: 4.05 * TILE },
         x: 7 * TILE,
         y: 4 * TILE,
