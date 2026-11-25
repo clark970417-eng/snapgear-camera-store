@@ -623,6 +623,7 @@ export class SnapGearAdminPanel {
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
           <a href="/api/admin/export-sql" download="snapgear-camera-store.sql" class="btn-gba primary" style="text-decoration:none;">⬇ Export .sql Dump</a>
+          <a href="/api/export-db" download="snapgear.db" class="btn-gba success" style="text-decoration:none;">⬇ Download .db</a>
           <button class="btn-gba buy-now" id="resetDbBtn" type="button">↺ Reset to Original Seed SQL</button>
         </div>
       </div>

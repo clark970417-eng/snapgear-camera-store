@@ -619,7 +619,8 @@ function renderCartModal() {
           <div class="sql-preview-box">${esc(r.executed_sql.join("\n"))}</div>
           <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
             <button class="btn-gba sm primary" id="copyReceiptSqlBtn" type="button">📋 Copy Purchase SQL</button>
-            <a href="/api/export-sql" download="snapgear-purchases.sql" class="btn-gba sm success" style="text-decoration:none;">⬇ Download Full .sql</a>
+            <a href="/api/export-sql" download="snapgear-purchases.sql" class="btn-gba sm success" style="text-decoration:none;">⬇ Download .sql</a>
+            <a href="/api/export-db" download="snapgear.db" class="btn-gba sm" style="text-decoration:none;">⬇ Download .db</a>
           </div>
           <p style="font-size:12.5px;color:#555a6a;margin-top:8px;">
             Copy these exact statements or download the complete <code>.sql</code> file (all 6 tables + every purchase) to paste directly into any SQLite website.
@@ -856,7 +857,8 @@ function renderOrdersModal() {
       <h3 class="px" style="margin:0;font-size:18px;">📷 MY PURCHASED GEAR (${state.myPurchases.length > 0 ? "BOUGHT THIS SESSION" : "ACTIVE STORE ORDERS"})</h3>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn-gba sm primary" id="ordersCopyFullSqlBtn" type="button">📋 Copy Full SQL</button>
-        <a href="/api/export-sql" download="snapgear-purchases.sql" class="btn-gba sm success" style="text-decoration:none;">⬇ Download Full .sql</a>
+        <a href="/api/export-sql" download="snapgear-purchases.sql" class="btn-gba sm success" style="text-decoration:none;">⬇ Download .sql</a>
+        <a href="/api/export-db" download="snapgear.db" class="btn-gba sm" style="text-decoration:none;">⬇ Download .db</a>
       </div>
     </div>
     ${
